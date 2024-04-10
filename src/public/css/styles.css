@@ -1,0 +1,81 @@
+body {
+  font-family: Arial, sans-serif;
+}
+
+.container {
+  width: 80%;
+  margin: auto;
+  padding: 20px;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+select {
+  padding: 5px;
+  margin-right: 10px;
+}
+
+.task-input {
+  margin-bottom: 20px;
+}
+
+input[type="text"] {
+  padding: 5px;
+  width: calc(100% - 110px);
+  margin-right: 10px;
+}
+
+button {
+  padding: 5px 15px;
+}
+
+.task-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+#dataDiv {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    color: #333;
+    overflow: auto;
+    white-space: pre-wrap;
+}
+.dataItem {
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.dataItem h2 {
+    margin: 0 0 10px 0;
+    font-size: 20px;
+    color: #333;
+}
+
+.dataItem p {
+    margin: 0 0 5px 0;
+    font-size: 16px;
+    color: #666;
+}
+
+.dataItem input[type="date"],
+.dataItem input[type="text"] {
+    margin-left: 10px;
+}
+
+.dataItem select {
+    margin-left: 10px;
+}
+/* Add more styles as needed */

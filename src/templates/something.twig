@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    <input type="hidden" name="formToken" value="{{ token }}">
+
+<form >
+
+    <input id="email" name="email" type="text" placeholder="Email">
+    <input id="surname" name="surname" type="text" placeholder="Name">
+
+    <button type="submit">Send</button>
+
+</form>
+
+</body>
+<script>
+    document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    let formData = new FormData(event.target);
+    let token = document.querySelector('input[name="formToken"]').value;
+
+    fetch('/capture', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${token}`
+        },
+        body: new URLSearchParams(formData)
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+        .then(data => {})
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+</script>
+</html>
+

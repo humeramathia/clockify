@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "clockify"
+version = "0.1.0"
+description = ""
+authors = ["Humi1211 <humeramathia1211@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+tina4-python = "^0.1.45"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body>
+    <form method="post">
+    <div class="container">
+
+        <header>
+            <div class="date-input">
+    <label for="datePicker">Due Date:</label>
+    <input type="date" id="datePicker" name="date">
+</div>
+            <!-- Dropdowns for selecting project, task, and user -->
+            <select id="projectDropdown" name="project">
+                <option value="">Select Project</option>
+                <!-- Projects will be dynamically loaded here -->
+            </select>
+            <select id="taskDropdown" name="task">
+                <option value="">Select Task</option>
+                <!-- Tasks will be dynamically loaded here -->
+            </select>
+            <select id="userDropdown" name="user">
+                <option value="">Choose User</option>
+                <!-- Users will be dynamically loaded here -->
+            </select>
+        </header>
+
+        <main>
+            <!-- Input for adding a new task -->
+            <div class="task-input">
+                <input type="text" id="taskDescriptionInput" name="description" placeholder="Description">
+                <button id="addTaskButton" type="submit">Add Task</button>
+            </div>
+
+            <div class="task-list">
+                <!-- Dynamically generated task list will go here -->
+            </div>
+        </main>
+    </div>
+        <input type="hidden" name="formToken" value="{{ token }}">
+</form>
+ <!-- Add this div to display the data -->
+    <div id="dataDiv"></div>
+    <script>
+      // Get the token from the hidden input field and store it in a variable
+let token = document.querySelector('input[name="formToken"]').value;
+
+document.querySelector('form').addEventListener('submit', function(event) {
+    event.preventDefault();
+
+    // Remove the token from the form before creating the FormData object
+    document.querySelector('input[name="formToken"]').remove();
+
+    let formData = new FormData(event.target);
+    let jsonObject = {};
+    for (const [key, value]  of formData.entries()) {
+        jsonObject[key] = value;
+    }
+
+    fetch('/capture', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(jsonObject)
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch((error) => {
+        console.error('Error:', error);
+    });
+});
+
+fetch('/data')
+    .then(response => {
+        startTimer(); // Start the timer when the fetch request starts
+        return response.json();
+    })
+    .then(data => {
+
+        const dataDiv = document.getElementById('dataDiv');
+        data.forEach(item => {
+            const itemDiv = document.createElement('div');
+
+            itemDiv.dataset.id = item.id;
+            itemDiv.innerHTML = `
+                <p><strong>Project:</strong>
+                    <select class="projectDropdown">
+                        <option>${item.project}</option>
+                        <!-- Other projects will be dynamically loaded here -->
+                    </select>
+                </p>
+                <p><strong>Due Date :</strong> <input type="date" value="${item.date}"></p>
+                <p><strong>Date Created:</strong> <input type="date" value="${new Date().toISOString().substr(0, 10)}"></p>
+
+                </p>
+                <p><strong>Task:</strong>
+                    <select class="taskDropdown">
+                        <option>${item.task}</option>
+                        <!-- Other tasks will be dynamically loaded here -->
+                    </select>
+                </p>
+                <p><strong>Description:</strong> <input type="text" value="${item.description}"></p>
+                <p><strong>Priority:</strong>
+                    <select>
+                        <option>High</option>
+                        <option>Normal</option>
+                        <option>Low</option>
+                    </select>
+                </p>
+                <p><strong>Status:</strong>
+                    <select>
+                        <option>In Progress</option>
+                        <option>Review</option>
+                        <option>Finished</option>
+                    </select>
+                </p>
+                <p><strong>Created By:</strong>
+                    <select id="createdByDropdown">
+                        <!-- Users will be dynamically loaded here -->
+                    </select>
+                </p>
+                <p><strong>Assigned To:</strong>
+                    <select id="assignedToDropdown">
+                        <!-- Users will be dynamically loaded here -->
+                    </select>
+                </p>
+<button class="saveButton">Save Changes</button>
+                <p id="timer">00:00</p>
+                <button id="startStopButton" onclick="toggleTimer()">Start</button>
+            `;
+            dataDiv.appendChild(itemDiv);
+        });
+         stopTimer();
+          })// Stop the timer when the fetch request finishes
+        // Fetch the users and populate the user dropdowns
+        fetch('/clockify/users')
+            .then(response => response.json())
+            .then(userNames => {
+                const createdByDropdowns = document.querySelectorAll('#createdByDropdown');
+                const assignedToDropdowns = document.querySelectorAll('#assignedToDropdown');
+                userNames.forEach(userName => {
+                    const option = document.createElement('option');
+                    option.value = userName;
+                    option.textContent = userName;
+                    createdByDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    assignedToDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                });
+            });
+        // Fetch the projects and populate the project dropdowns
+        fetch('/clockify/projects/names')
+            .then(response => response.json())
+            .then(projectNames => {
+                const projectDropdowns = document.querySelectorAll('.projectDropdown');
+                projectNames.forEach(projectName => {
+                    const option = document.createElement('option');
+                    option.value = projectName;
+                    option.textContent = projectName;
+                    projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                });
+            });
+        // Add event listeners to the project dropdowns to fetch tasks when a project is selected
+        // This part of your code is correct, but ensure you also use the correct class or unique ID selectors
+        document.querySelectorAll('.projectDropdown').forEach(dropdown => {
+            dropdown.addEventListener('change', function () {
+                const projectName = this.value;
+                const taskDropdown = this.closest('.dataItem').querySelector('.taskDropdown'); // Adjusted to use class
+
+                fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
+                    .then(response => response.json())
+                    .then(taskNames => {
+                        // Clear the current tasks
+                        taskDropdown.innerHTML = '';
+                        // Add an option for each task
+                        taskNames.forEach(taskName => {
+                            const option = document.createElement('option');
+                            option.value = taskName;
+                            option.textContent = taskName;
+                            taskDropdown.appendChild(option);
+                        });
+                    });
+            });
+
+    })
+let isRunning = false;
+let timer = 0;
+let intervalId = null;
+
+function startTimer() {
+    if (intervalId) {
+        console.log('Timer is already running');
+        return;
+    }
+    intervalId = setInterval(() => {
+        timer++;
+        displayTime();
+    }, 1000);
+    isRunning = true;
+}
+function stopTimer() {
+    if (!intervalId) {
+        console.log('Timer is not running');
+        return;
+    }
+    clearInterval(intervalId);
+    intervalId = null;
+    isRunning = false;
+
+    let dataItem = document.querySelector('.dataItem');
+    let taskData = {
+        projectId: dataItem.querySelector('.projectDropdown').value,
+        taskName: dataItem.querySelector('.taskDropdown').value,
+        taskDescription: dataItem.querySelector('input[type="text"]').value,
+    };
+
+
+    fetch('http://localhost:7145/clockify/create-task', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify(taskData)
+    })
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .catch((error) => console.error('Error:', error));
+}
+
+function toggleTimer() {
+    const button = document.getElementById('startStopButton');
+    if (isRunning) {
+        stopTimer();
+        button.textContent = 'Start'; // Change the button text to 'Start'
+    } else {
+        startTimer();
+        button.textContent = 'Stop'; // Change the button text to 'Stop'
+    }
+}
+function displayTime() {
+    const minutes = Math.floor(timer / 60);
+    const seconds = timer % 60;
+    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+    // Update the timer element
+    document.getElementById('timer').textContent = timeString;
+
+    console.log(timeString);
+}
+document.querySelector('#dataDiv').addEventListener('click', function(event) {
+    if (event.target.classList.contains('saveButton')) {
+        let dataItem = event.target.closest('.dataItem');
+        let updatedData = {
+            id: dataItem.dataset.id,
+            // This assumes you have the document's ID stored in a data attribute
+            data: {
+                project: dataItem.querySelector('.projectDropdown').value,
+                dueDate: dataItem.querySelector('input[type="date"]').value,
+                task: dataItem.querySelector('.taskDropdown').value,
+                description: dataItem.querySelector('input[type="text"]').value,
+                // ... collect other necessary fields
+            }
+        };
+
+        fetch('/update-data', {
+            method: 'PUT', // Use PUT method
+            headers: {
+                'Content-Type': 'application/json',
+                 'Authorization': `Bearer ${token}`,
+                // Include authorization headers as needed
+            },
+            body: JSON.stringify(updatedData) // Send the updated data
+        })
+        .then(response => response.json())
+        .then(data => console.log(data))
+        .catch((error) => console.error('Error:', error));
+
+    }
+});
+
+</script>
+    <script src="/js/app.js"></script>
+</body>
+</html>
+
+
