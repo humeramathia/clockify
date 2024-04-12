@@ -83,11 +83,10 @@ fetch('/data')
         return response.json();
     })
     .then(data => {
-
         const dataDiv = document.getElementById('dataDiv');
+        const itemDiv = document.createElement('div');
         data.forEach(item => {
-            const itemDiv = document.createElement('div');
-
+            itemDiv.classList.add('dataItem');
             itemDiv.dataset.id = item.id;
             itemDiv.innerHTML = `
                 <p><strong>Project:</strong>
@@ -164,30 +163,28 @@ fetch('/data')
                     option.textContent = projectName;
                     projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
                 });
-            });
-        // Add event listeners to the project dropdowns to fetch tasks when a project is selected
-        // This part of your code is correct, but ensure you also use the correct class or unique ID selectors
+
+
         document.querySelectorAll('.projectDropdown').forEach(dropdown => {
-            dropdown.addEventListener('change', function () {
-                const projectName = this.value;
-                const taskDropdown = this.closest('.dataItem').querySelector('.taskDropdown'); // Adjusted to use class
-
-                fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
-                    .then(response => response.json())
-                    .then(taskNames => {
-                        // Clear the current tasks
-                        taskDropdown.innerHTML = '';
-                        // Add an option for each task
-                        taskNames.forEach(taskName => {
-                            const option = document.createElement('option');
-                            option.value = taskName;
-                            option.textContent = taskName;
-                            taskDropdown.appendChild(option);
-                        });
+        dropdown.addEventListener('change', function () {
+            const projectName = this.value;
+            const taskDropdown = this.closest('.dataItem').querySelector('.taskDropdown');
+            fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
+                .then(response => response.json())
+                .then(taskNames => {
+                    taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
+                    taskNames.forEach(taskName => {
+                        const option = document.createElement('option');
+                        option.value = taskName;
+                        option.textContent = taskName;
+                        taskDropdown.appendChild(option);
                     });
-            });
+                });
+        });
+    });
+})
+.catch(error => console.error('Error loading projects:', error));
 
-    })
 let isRunning = false;
 let timer = 0;
 let intervalId = null;
@@ -212,7 +209,7 @@ function stopTimer() {
     intervalId = null;
     isRunning = false;
 
-    let dataItem = document.querySelector('.dataItem');
+  let dataItem = document.querySelector('.dataItem');
     let taskData = {
         projectId: dataItem.querySelector('.projectDropdown').value,
         taskName: dataItem.querySelector('.taskDropdown').value,
@@ -237,10 +234,10 @@ function toggleTimer() {
     const button = document.getElementById('startStopButton');
     if (isRunning) {
         stopTimer();
-        button.textContent = 'Start'; // Change the button text to 'Start'
+        button.textContent = 'Start';
     } else {
         startTimer();
-        button.textContent = 'Stop'; // Change the button text to 'Stop'
+        button.textContent = 'Stop';
     }
 }
 function displayTime() {
@@ -258,7 +255,7 @@ document.querySelector('#dataDiv').addEventListener('click', function(event) {
         let dataItem = event.target.closest('.dataItem');
         let updatedData = {
             id: dataItem.dataset.id,
-            // This assumes you have the document's ID stored in a data attribute
+
             data: {
                 project: dataItem.querySelector('.projectDropdown').value,
                 dueDate: dataItem.querySelector('input[type="date"]').value,
@@ -269,11 +266,11 @@ document.querySelector('#dataDiv').addEventListener('click', function(event) {
         };
 
         fetch('/update-data', {
-            method: 'PUT', // Use PUT method
+            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                  'Authorization': `Bearer ${token}`,
-                // Include authorization headers as needed
+
             },
             body: JSON.stringify(updatedData) // Send the updated data
         })
