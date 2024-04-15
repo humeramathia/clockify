@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Manager</title>
     <link rel="stylesheet" href="/css/styles.css">
-</head>
+
 <body>
     <form method="post">
     <div class="container">
@@ -42,10 +42,39 @@
             </div>
         </main>
     </div>
-        <input type="hidden" name="formToken" value="{{ token }}">
-</form>
+
+
  <!-- Add this div to display the data -->
     <div id="dataDiv"></div>
+
+   <input type="hidden" name="formToken" value="{{ token }}">
+        </form>
+<table class="task-table">
+        <thead>
+            <tr>
+                <th>Date Created</th>
+                <th>Project</th>
+                <th>Task</th>
+                <th>Description</th>
+
+                <th>Date Due</th>
+                <th>Priority</th>
+                <th>Created By</th>
+                <th>Assign To</th>
+                <th>Task Status</th>
+                <th>Timer</th>
+                <th>Hours Worked</th>
+                <th>Action</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Task rows will be dynamically generated here -->
+        </tbody>
+    </table>
+
+
+
     <script>
       // Get the token from the hidden input field and store it in a variable
 let token = document.querySelector('input[name="formToken"]').value;
@@ -77,67 +106,69 @@ document.querySelector('form').addEventListener('submit', function(event) {
     });
 });
 
-fetch('/data')
-    .then(response => {
-        startTimer(); // Start the timer when the fetch request starts
-        return response.json();
-    })
-    .then(data => {
-        const dataDiv = document.getElementById('dataDiv');
-        const itemDiv = document.createElement('div');
-        data.forEach(item => {
-            itemDiv.classList.add('dataItem');
-            itemDiv.dataset.id = item.id;
-            itemDiv.innerHTML = `
-                <p><strong>Project:</strong>
-                    <select class="projectDropdown">
-                        <option>${item.project}</option>
-                        <!-- Other projects will be dynamically loaded here -->
-                    </select>
-                </p>
-                <p><strong>Due Date :</strong> <input type="date" value="${item.date}"></p>
-                <p><strong>Date Created:</strong> <input type="date" value="${new Date().toISOString().substr(0, 10)}"></p>
 
-                </p>
-                <p><strong>Task:</strong>
-                    <select class="taskDropdown">
-                        <option>${item.task}</option>
-                        <!-- Other tasks will be dynamically loaded here -->
-                    </select>
-                </p>
-                <p><strong>Description:</strong> <input type="text" value="${item.description}"></p>
-                <p><strong>Priority:</strong>
+
+
+fetch('/data')
+    .then(response => response.json())
+    .then(data => {
+        // Create a table row for each item in the data array
+        const tableBody = document.querySelector('.task-table tbody');
+        tableBody.innerHTML = ''; // Clear the table body
+
+        data.forEach(item => {
+            const row = document.createElement('tr');
+
+            // Add cells to the row
+            row.innerHTML = `
+                <td><input type="date" value="${new Date().toISOString().substr(0, 10)}"></td>
+                <td><select class="projectDropdown"><option>${item.project}</option></td>
+                <td><select class="taskDropdown"> <option>${item.task}</option></td>
+                <td> <input type="text" class="descriptionInput" value="${item.description}">
+</td>
+
+<td><input type="date" value="${item.date ? item.date : ''}"></td>
+<td></strong>
                     <select>
                         <option>High</option>
                         <option>Normal</option>
                         <option>Low</option>
-                    </select>
-                </p>
-                <p><strong>Status:</strong>
+                    </select></
+</td>
+<td><select id="createdByDropdown"></option></td>
+<td><select id="assignedToDropdown"><option></option></td>
+<td></strong>
                     <select>
                         <option>In Progress</option>
                         <option>Review</option>
                         <option>Finished</option>
                     </select>
-                </p>
-                <p><strong>Created By:</strong>
-                    <select id="createdByDropdown">
-                        <!-- Users will be dynamically loaded here -->
-                    </select>
-                </p>
-                <p><strong>Assigned To:</strong>
-                    <select id="assignedToDropdown">
-                        <!-- Users will be dynamically loaded here -->
-                    </select>
-                </p>
-<button class="saveButton">Save Changes</button>
-                <p id="timer">00:00</p>
-                <button id="startStopButton" onclick="toggleTimer()">Start</button>
-            `;
-            dataDiv.appendChild(itemDiv);
+</td>
+
+
+<td><button id="startStopButton">Start</button></td>
+
+
+
+                      <button class="save">Save Changes </button>
+                        <button class="deleteButton">Delete</button> <!-- Add this line -->
+                    </td>
+
+<td data-id="${item.id}" style="display: none;">${item.someOtherProperty}</td>
+<td>
+`;
+
+
+            // Append the row to the table body
+            tableBody.appendChild(row);
         });
-         stopTimer();
-          })// Stop the timer when the fetch request finishes
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+
+
+
         // Fetch the users and populate the user dropdowns
         fetch('/clockify/users')
             .then(response => response.json())
@@ -166,23 +197,27 @@ fetch('/data')
 
 
         document.querySelectorAll('.projectDropdown').forEach(dropdown => {
-        dropdown.addEventListener('change', function () {
-            const projectName = this.value;
-            const taskDropdown = this.closest('.dataItem').querySelector('.taskDropdown');
-            fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
-                .then(response => response.json())
-                .then(taskNames => {
-                    taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
-                    taskNames.forEach(taskName => {
-                        const option = document.createElement('option');
-                        option.value = taskName;
-                        option.textContent = taskName;
-                        taskDropdown.appendChild(option);
-                    });
+    dropdown.addEventListener('change', function () {
+        const projectName = this.value;
+        // Find the '.taskDropdown' within the same table row
+        const taskDropdown = this.closest('tr').querySelector('.taskDropdown');
+        fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
+            .then(response => response.json())
+            .then(taskNames => {
+                taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
+                taskNames.forEach(taskName => {
+                    const option = document.createElement('option');
+                    option.value = taskName;
+                    option.textContent = taskName;
+                    taskDropdown.appendChild(option);
                 });
-        });
+            });
     });
-})
+});
+
+       })
+
+
 .catch(error => console.error('Error loading projects:', error));
 
 let isRunning = false;
@@ -196,7 +231,7 @@ function startTimer() {
     }
     intervalId = setInterval(() => {
         timer++;
-        displayTime();
+        console.log('Timer:', timer);
     }, 1000);
     isRunning = true;
 }
@@ -208,8 +243,9 @@ function stopTimer() {
     clearInterval(intervalId);
     intervalId = null;
     isRunning = false;
+}
 
-  let dataItem = document.querySelector('.dataItem');
+    let dataItem = document.querySelector('.dataItem');
     let taskData = {
         projectId: dataItem.querySelector('.projectDropdown').value,
         taskName: dataItem.querySelector('.taskDropdown').value,
@@ -217,67 +253,121 @@ function stopTimer() {
     };
 
 
-    fetch('http://localhost:7145/clockify/create-task', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(taskData)
-    })
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .catch((error) => console.error('Error:', error));
-}
-
-function toggleTimer() {
+    function toggleTimer() {
     const button = document.getElementById('startStopButton');
     if (isRunning) {
         stopTimer();
         button.textContent = 'Start';
+
+        // Calculate hours worked and display it in the "Hours Worked" cell
+        const row = button.closest('tr');
+        const hoursWorkedCell = row.querySelector('.hoursWorked');
+        hoursWorkedCell.textContent = calculateHoursWorked(timer);
     } else {
         startTimer();
         button.textContent = 'Stop';
     }
 }
-function displayTime() {
-    const minutes = Math.floor(timer / 60);
-    const seconds = timer % 60;
-    const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+document.getElementById('startStopButton').addEventListener('click', toggleTimer);
+    function displayTime() {
+        const minutes = Math.floor(timer / 60);
+        const seconds = timer % 60;
+        const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-    // Update the timer element
-    document.getElementById('timer').textContent = timeString;
+        // Update the timer element
+        document.getElementById('timer').textContent = timeString;
 
-    console.log(timeString);
-}
-document.querySelector('#dataDiv').addEventListener('click', function(event) {
-    if (event.target.classList.contains('saveButton')) {
-        let dataItem = event.target.closest('.dataItem');
-        let updatedData = {
-            id: dataItem.dataset.id,
+        console.log(timeString);
+    }
 
+
+
+
+
+
+
+
+
+// Add event listener to the "Delete" button
+    document.querySelector('.task-table').addEventListener('click', function (event) {
+        if (event.target.classList.contains('deleteButton')) {
+            console.log('Delete button clicked');
+
+            // Get the table row that contains the clicked button
+            const row = event.target.closest('tr');
+
+            // Gather the data to be deleted
+            const dataToBeDeleted = {
+                id: row.querySelector('td[data-id]').getAttribute('data-id'),
+            };
+
+            console.log('Data to be deleted:', dataToBeDeleted);
+
+            // Send a fetch request to the server to delete the data
+            fetch('/delete-data', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(dataToBeDeleted)
+            })
+                .then(response => {
+                    console.log('Response:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('Data deleted successfully');
+                    } else {
+                        console.error('Error deleting data:', data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    });
+
+
+document.querySelector('.task-table').addEventListener('click', function (event) {
+    if (event.target.classList.contains('save')) {
+        console.log('Save button clicked');
+
+        // Get the table row that contains the clicked button
+        const row = event.target.closest('tr');
+
+        // Gather the data to be updated
+        const dataToBeUpdated = {
+            id: row.querySelector('td[data-id]').getAttribute('data-id'),
             data: {
-                project: dataItem.querySelector('.projectDropdown').value,
-                dueDate: dataItem.querySelector('input[type="date"]').value,
-                task: dataItem.querySelector('.taskDropdown').value,
-                description: dataItem.querySelector('input[type="text"]').value,
-                // ... collect other necessary fields
+                description: row.querySelector('.descriptionInput').value,
+
+
             }
         };
 
+        console.log('Data to be updated:', dataToBeUpdated);
+
+        // Send a fetch request to the server to update the data
         fetch('/update-data', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
-                 'Authorization': `Bearer ${token}`,
-
+                'Authorization': `Bearer ${token}`,
             },
-            body: JSON.stringify(updatedData) // Send the updated data
+            body: JSON.stringify(dataToBeUpdated)
         })
-        .then(response => response.json())
-        .then(data => console.log(data))
-        .catch((error) => console.error('Error:', error));
-
+        .then(response => {
+            console.log('Response:', response);
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                console.log('Data updated successfully');
+            } else {
+                console.error('Error updating data:', data.error);
+            }
+        })
+        .catch(error => console.error('Error:', error));
     }
 });
 

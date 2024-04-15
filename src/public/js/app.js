@@ -59,4 +59,3 @@ function loadTasksForProject(projectName) {
         .catch(error => console.error('Error loading tasks:', error));
 }
 
-

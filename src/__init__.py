@@ -5,7 +5,7 @@ import requests
 import tina4_python
 from tina4_python import Debug
 from tina4_python.Request import Request
-from tina4_python.Router import get, post, put
+from tina4_python.Router import get, post, put, delete
 from tina4_python.Response import Response
 from tina4_python.Template import Template
 import firebase_admin
@@ -22,6 +22,11 @@ cred_path = 'src/secrets/firebase-private-key.json'
 cred = credentials.Certificate(cred_path)
 firebase_admin.initialize_app(cred)
 db = firestore.client()
+
+
+
+
+
 
 
 # Utility function to find project ID by name
@@ -170,13 +175,15 @@ async def get_data(request, response):
 
 
 # Update data in Firestore
-@put("/update-data")  # Change this from @post to @put
-async def update_data(request: Request, **params):
+@put("/update-data")  # Update data in Firestore
+async def update_data(request, **params):
     try:
         # Parse the request body to JSON
         payload = request.body
         document_id = payload['id']
         update_fields = payload['data']
+        print('Payload:', payload)
+
 
         # Check if both the document ID and the update fields are provided
         if not document_id or not update_fields:
@@ -187,6 +194,7 @@ async def update_data(request: Request, **params):
 
         # Update the document
         doc_ref.update(update_fields)
+        print('Updated document')
 
         return Response(json.dumps({"success": "Data updated successfully"}), 200, "application/json")
     except Exception as e:
@@ -195,32 +203,30 @@ async def update_data(request: Request, **params):
         return Response(json.dumps({"error": "Error updating document"}), 500, "application/json")
 
 
-@post("/clockify/create-task")
-async def create_task(request, response):
+@delete("/delete-data")  # Delete data in Firestore
+async def delete_data(request, **params):
     try:
         # Parse the request body to JSON
         payload = request.body
-        project_id = payload['projectId']
-        task_name = payload['taskName']
-        task_description = payload['taskDescription']  # Add this line
+        document_id = payload['id']
 
-        # Check if both the project ID and the task name are provided
-        if not project_id or not task_name:
-            return Response(json.dumps({"error": "Missing project ID or task name"}), 400, "application/json")
+        # Check if the document ID is provided
+        if not document_id:
+            return Response(json.dumps({"error": "Missing document ID"}), 400, "application/json")
 
-        # Clockify API URL to create a task
-        url = f"{CLOCKIFY_ENDPOINT}/workspaces/{CLOCKIFY_WORKSPACE_ID}/projects/{project_id}/tasks"
-        headers = {"X-Api-Key": CLOCKIFY_API_KEY, "Content-Type": "application/json"}
-        data = {"name": task_name, "description": task_description}  # Add the description here
+        # Reference to the document to be deleted
+        doc_ref = db.collection('posts').document(document_id)
 
-        # Make a POST request to the Clockify API
-        response = requests.post(url, headers=headers, json=data)
+        # Delete the document
+        doc_ref.delete()
+        print('Deleted document')
 
-        if response.ok:
-            return Response(json.dumps({"success": "Task created successfully"}), 200, "application/json")
-        else:
-            return Response(json.dumps({"error": "Failed to create task"}), response.status_code, "application/json")
+        return Response(json.dumps({"success": "Data deleted successfully"}), 200, "application/json")
     except Exception as e:
         # Log the exception
-        print(f"Error creating task: {e}")
-        return Response(json.dumps({"error": "Error creating task"}), 500, "application/json")
+        print(f"Error deleting document: {e}")
+        return Response(json.dumps({"error": "Error deleting document"}), 500, "application/json")
+
+
+
+

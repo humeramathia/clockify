@@ -1,81 +1,51 @@
-body {
-  font-family: Arial, sans-serif;
+.task-manager {
+    width: 100%;
+    margin: 0 auto;
+    border-collapse: collapse;
 }
 
-.container {
-  width: 80%;
-  margin: auto;
-  padding: 20px;
+.task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
 }
 
-header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
+.task-table th, .task-table td {
+    border: 1px solid #ddd;
+    text-align: left;
+    padding: 8px;
 }
 
-select {
-  padding: 5px;
-  margin-right: 10px;
+.task-table th {
+    background-color: #f2f2f2;
 }
 
-.task-input {
-  margin-bottom: 20px;
+.filter-bar {
+    margin-bottom: 20px;
 }
 
-input[type="text"] {
-  padding: 5px;
-  width: calc(100% - 110px);
-  margin-right: 10px;
+/* Add additional CSS styles for inputs, buttons, and dropdowns */
+input[type="text"], input[type="date"], select {
+    padding: 5px;
+    margin-right: 10px;
 }
 
 button {
-  padding: 5px 15px;
-}
-
-.task-list {
-  list-style-type: none;
-  padding: 0;
-}
-
-#dataDiv {
-    width: 100%;
-    max-width: 600px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #f9f9f9;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: Arial, sans-serif;
-    color: #333;
-    overflow: auto;
-    white-space: pre-wrap;
-}
-.dataItem {
-    padding: 10px;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
+    padding: 5px 15px;
+    background-color: #007bff;
+    color: white;
+    border: none;
     border-radius: 4px;
 }
 
-.dataItem h2 {
-    margin: 0 0 10px 0;
-    font-size: 20px;
-    color: #333;
+button:hover {
+    background-color: #0056b3;
+    cursor: pointer;
 }
 
-.dataItem p {
-    margin: 0 0 5px 0;
-    font-size: 16px;
-    color: #666;
+/* Style the checkboxes if necessary */
+input[type="checkbox"] {
+    margin-right: 5px;
 }
 
-.dataItem input[type="date"],
-.dataItem input[type="text"] {
-    margin-left: 10px;
-}
-
-.dataItem select {
-    margin-left: 10px;
-}
-/* Add more styles as needed */
+/* Further styling can be added to match the exact look of the buttons, inputs, and the table */
