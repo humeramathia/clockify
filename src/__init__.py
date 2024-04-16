@@ -227,6 +227,29 @@ async def delete_data(request, **params):
         print(f"Error deleting document: {e}")
         return Response(json.dumps({"error": "Error deleting document"}), 500, "application/json")
 
+@put("/update-data")  # Update data in Firestore
+async def update_data(request, **params):
+    try:
+        # Parse the request body to JSON
+        sorted_ids = request.body
 
+        # Check if the sorted_ids array is provided
+        if not sorted_ids:
+            return Response(json.dumps({"error": "Missing sorted_ids"}), 400, "application/json")
+
+        # Update the position field of each task in Firestore
+        for i, id in enumerate(sorted_ids):
+            # Reference to the document to be updated
+            doc_ref = db.collection('posts').document(id)
+
+            # Update the document
+            doc_ref.update({'position': i})
+            print('Updated document')
+
+        return Response(json.dumps({"success": "Data updated successfully"}), 200, "application/json")
+    except Exception as e:
+        # Log the exception
+        print(f"Error updating document: {e}")
+        return Response(json.dumps({"error": "Error updating document"}), 500, "application/json")
 
 
