@@ -11,31 +11,57 @@
     <div class="container">
 
         <header>
-            <div class="date-input">
-    <label for="datePicker">Due Date:</label>
-    <input type="date" id="datePicker" name="date">
-</div>
-            <!-- Dropdowns for selecting project, task, and user -->
+<div class="tasks">
+    <h2>Tasks </h2></div>
+
+
+
+               <h5>Select Project </h5>
+                <div class="project-input">
             <select id="projectDropdown" name="project">
                 <option value="">Select Project</option>
                 <!-- Projects will be dynamically loaded here -->
             </select>
+                </div>
+
+                <div class="task-input">
+                <h5>Select Tasks </h5>
             <select id="taskDropdown" name="task">
                 <option value="">Select Task</option>
                 <!-- Tasks will be dynamically loaded here -->
             </select>
+                </div>
+
+                <div class="user-input">
+                <h5>Choose user </h5>
             <select id="userDropdown" name="user">
                 <option value="">Choose User</option>
                 <!-- Users will be dynamically loaded here -->
             </select>
-        </header>
+            </div>
 
-        <main>
-            <!-- Input for adding a new task -->
-            <div class="task-input">
+
+                <div class="date-input">
+    <label for="datePicker">Due Date:</label>
+    <input type="date" id="datePicker" name="date">
+</div>
+             <div class="des-input">
+                  <h5>Description </h5>
                 <input type="text" id="taskDescriptionInput" name="description" placeholder="Description">
                 <button id="addTaskButton" type="submit">Add Task</button>
             </div>
+
+        </header>
+        <div class="boxes">
+<input type="checkbox" id="showCompletedTasks" name="showCompletedTasks">
+<label for="showCompletedTasks">Show completed tasks</label>
+
+<input type="checkbox" id="showTasksIAssigned" name="showTasksIAssigned">
+<label for="showTasksIAssigned">Show tasks I assigned</label>
+</div>
+        <main>
+            <!-- Input for adding a new task -->
+
 
             <div class="task-list">
                 <!-- Dynamically generated task list will go here -->
@@ -49,7 +75,7 @@
 
    <input type="hidden" name="formToken" value="{{ token }}">
         </form>
-<table class="task-table">
+<table class="task-table table-small">
         <thead>
             <tr>
                 <th>Date Created</th>
@@ -107,24 +133,50 @@ document.querySelector('form').addEventListener('submit', function(event) {
 });
 
 
+document.querySelector('.task-table').addEventListener('change', function(event) {
+    // Check if the event target has the class 'priorityDropdown'
+    if (event.target.classList.contains('priorityDropdown')) {
+        // Get the task ID
+        const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
 
+        // Save the selected value to the local storage with the task ID
+        localStorage.setItem(`priority-${taskId}`, event.target.value);
+    }
+});
+document.querySelector('.task-table').addEventListener('change', function(event) {
+    // Check if the event target has the class 'priorityDropdown'
+    if (event.target.classList.contains('statusDropdown')) {
+        // Get the task ID
+        const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
 
-fetch('/data')
-    .then(response => response.json())
-    .then(data => {
-        // Create a table row for each item in the data array
-        const tableBody = document.querySelector('.task-table tbody');
-        tableBody.innerHTML = ''; // Clear the table body
+        // Save the selected value to the local storage with the task ID
+        localStorage.setItem(`status-${taskId}`, event.target.value);
+    }
+    });
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelector('.task-table').addEventListener('change', function (event) {
+        if (event.target.classList.contains('userDropdown')) {
+            const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
+            localStorage.setItem(`created-${taskId}`, event.target.value);
+        }
+    });
+    fetch('/data')
+        .then(response => response.json())
+        .then(data => {
+            // Create a table row for each item in the data array
+            const tableBody = document.querySelector('.task-table tbody');
+            tableBody.innerHTML = ''; // Clear the table body
 
-        data.forEach(item => {
-            const row = document.createElement('tr');
+            data.forEach(item => {
+                const row = document.createElement('tr');
 
-            // Add cells to the row
-            row.innerHTML = `
+                // Add cells to the row
+                row.innerHTML = `
                 <td><input type="date" value="${new Date().toISOString().substr(0, 10)}"></td>
-                <td><select class="projectDropdown"><option>${item.project}</option></td>
-                <td><select class="taskDropdown"> <option>${item.task}</option></td>
+                <td><select class="projectDropdown small-dropdown"><option>${item.project} </option></td>
+                <td><select class="taskDropdown small-dropdown"> <option>${item.task}</option></td>
                 <td> <input type="text" class="descriptionInput" value="${item.description}">
+
 </td>
 <td>
 <button class="sort" data-sort="asc" data-column="0">⬆️</button>
@@ -132,16 +184,16 @@ fetch('/data')
 </td>
 <td><input type="date" value="${item.date ? item.date : ''}"></td>
 <td></strong>
-<select>
+   <select class="PriorityDropdown">
     <option>High</option>
     <option>Normal</option>
     <option>Low</option>
 </select>
 </td>
-<td><select id="createdByDropdown"></option></td>
-<td><select id="assignedToDropdown"><option></option></td>
+ <td><select class="userDropdown small-dropdown"><option>${item.user}</option></td>
+<td><select class="assignedToDropdown small-dropdown"><option> ${item.user}</option></td>
 <td></strong>
-                    <select>
+                   <select class="statusDropdown">
                         <option>In Progress</option>
                         <option>Review</option>
                         <option>Completed</option>
@@ -154,7 +206,7 @@ fetch('/data')
 
 
                       <td>
-                        <button class="save">Save Changes </button>
+                        <button class="save">Save </button>
                         <button class="deleteButton">Delete</button> <!-- Add this line -->
                     </td>
 
@@ -163,67 +215,118 @@ fetch('/data')
 `;
 
 
-            // Append the row to the table body
-            tableBody.appendChild(row);
+                // Append the row to the table body
+                tableBody.appendChild(row);
+                const savedPriority = localStorage.getItem(`priority-${item.id}`);
+                if (savedPriority) {
+                    row.querySelector('.priorityDropdown').value = savedPriority;
+                }
+                const savedStatus = localStorage.getItem(`status-${item.id}`);
+                if (savedStatus) {
+                    row.querySelector('.statusDropdown').value = savedStatus;
+                }
+               const savedCreated = localStorage.getItem(`created-${item.id}`);
+if (savedCreated) {
+    row.querySelector('.userDropdown').value = savedCreated;
+}
+               populateProjectDropdowns();
+                    populateCreatedByDropdowns();
+                    populateAssignedToDropdowns();
+                    populateUsersDropdowns();
+
+                  });
+        })
+
+
+        .catch(error => {
+            console.error('Error:', error);
         });
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
 
 
+        })
 
-        // Fetch the users and populate the user dropdowns
+      function populateUsersDropdowns(){
         fetch('/clockify/users')
             .then(response => response.json())
             .then(userNames => {
-                const createdByDropdowns = document.querySelectorAll('#createdByDropdown');
-                const assignedToDropdowns = document.querySelectorAll('#assignedToDropdown');
+                const userDropdowns = document.querySelectorAll('.userDropdown');
                 userNames.forEach(userName => {
                     const option = document.createElement('option');
                     option.value = userName;
                     option.textContent = userName;
-                    createdByDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
-                    assignedToDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    userDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                });
+            })
+            .catch(error => console.error('Error loading users:', error));
+      }
+    function populateProjectDropdowns() {
+            // Fetch the projects and populate the project dropdowns
+            fetch('/clockify/projects/names')
+                .then(response => response.json())
+                .then(projectNames => {
+                    const projectDropdowns = document.querySelectorAll('.projectDropdown');
+                    projectNames.forEach(projectName => {
+                        const option = document.createElement('option');
+                        option.value = projectName;
+                        option.textContent = projectName;
+                        projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading projects:', error));
+            document.querySelectorAll('.projectDropdown').forEach(dropdown => {
+                dropdown.addEventListener('change', function () {
+                    const projectName = this.value;
+                    // Find the '.taskDropdown' within the same table row
+                    const taskDropdown = this.closest('tr').querySelector('.taskDropdown');
+                    fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
+                        .then(response => response.json())
+                        .then(taskNames => {
+                            taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
+                            taskNames.forEach(taskName => {
+                                const option = document.createElement('option');
+                                option.value = taskName;
+                                option.textContent = taskName;
+                                taskDropdown.appendChild(option);
+                            });
+                        });
                 });
             });
-        // Fetch the projects and populate the project dropdowns
-        fetch('/clockify/projects/names')
-            .then(response => response.json())
-            .then(projectNames => {
-                const projectDropdowns = document.querySelectorAll('.projectDropdown');
-                projectNames.forEach(projectName => {
-                    const option = document.createElement('option');
-                    option.value = projectName;
-                    option.textContent = projectName;
-                    projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
-                });
+        }
 
 
-        document.querySelectorAll('.projectDropdown').forEach(dropdown => {
-    dropdown.addEventListener('change', function () {
-        const projectName = this.value;
-        // Find the '.taskDropdown' within the same table row
-        const taskDropdown = this.closest('tr').querySelector('.taskDropdown');
-        fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
-            .then(response => response.json())
-            .then(taskNames => {
-                taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
-                taskNames.forEach(taskName => {
-                    const option = document.createElement('option');
-                    option.value = taskName;
-                    option.textContent = taskName;
-                    taskDropdown.appendChild(option);
-                });
-            });
-    });
-});
+        function populateCreatedByDropdowns() {
+            // Fetch the users and populate the createdBy dropdowns
+            fetch('/clockify/users')
+                .then(response => response.json())
+                .then(userNames => {
+                    const createdByDropdowns = document.querySelectorAll('.createdByDropdown');
+                    userNames.forEach(userName => {
+                        const option = document.createElement('option');
+                        option.value = userName;
+                        option.textContent = userName;
+                        createdByDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading users:', error));
+        }
 
-       })
+        function populateAssignedToDropdowns() {
+            // Fetch the users and populate the assignedTo dropdowns
+            fetch('/clockify/users')
+                .then(response => response.json())
+                .then(userNames => {
+                    const assignedToDropdowns = document.querySelectorAll('.assignedToDropdown');
+                    userNames.forEach(userName => {
+                        const option = document.createElement('option');
+                        option.value = userName;
+                        option.textContent = userName;
+                        assignedToDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading users:', error));
 
 
-.catch(error => console.error('Error loading projects:', error));
-
+    }
 
 // Add event listener to the "Delete" button
     document.querySelector('.task-table').addEventListener('click', function (event) {
@@ -265,159 +368,167 @@ fetch('/data')
     });
 
 
-document.querySelector('.task-table').addEventListener('click', function (event) {
-    if (event.target.classList.contains('save')) {
-        console.log('Save button clicked');
+    document.querySelector('.task-table').addEventListener('click', function (event) {
+        if (event.target.classList.contains('save')) {
+            console.log('Save button clicked');
 
-        // Get the table row that contains the clicked button
-        const row = event.target.closest('tr');
+            // Get the table row that contains the clicked button
+            const row = event.target.closest('tr');
 
-        // Gather the data to be updated
-        const dataToBeUpdated = {
-            id: row.querySelector('td[data-id]').getAttribute('data-id'),
-            data: {
-                description: row.querySelector('.descriptionInput').value,
-
-
-            }
-        };
-
-        console.log('Data to be updated:', dataToBeUpdated);
-
-        // Send a fetch request to the server to update the data
-        fetch('/update-data', {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(dataToBeUpdated)
-        })
-        .then(response => {
-            console.log('Response:', response);
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                console.log('Data updated successfully');
-            } else {
-                console.error('Error updating data:', data.error);
-            }
-        })
-        .catch(error => console.error('Error:', error));
-    }
-});
+            // Gather the data to be updated
+            const dataToBeUpdated = {
+                id: row.querySelector('td[data-id]').getAttribute('data-id'),
+                data: {
+                    description: row.querySelector('.descriptionInput').value,
 
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Delegate event listener to the parent table
-    document.querySelector('.task-table').addEventListener('click', function(event) {
-        // Check if the clicked element is a start/stop button
-        if (event.target && event.target.id === 'startStopButton') {
-            toggleTimer(event);
+                }
+            };
+
+            console.log('Data to be updated:', dataToBeUpdated);
+
+            // Send a fetch request to the server to update the data
+            fetch('/update-data', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify(dataToBeUpdated)
+            })
+                .then(response => {
+                    console.log('Response:', response);
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        console.log('Data updated successfully');
+                    } else {
+                        console.error('Error updating data:', data.error);
+                    }
+                })
+                .catch(error => console.error('Error:', error));
         }
     });
 
-    function toggleTimer(event) {
-        console.log('toggleTimer function called');
-        const button = event.target;
-        const id = button.getAttribute('data-id');
-        if (!timers[id]) {
-            timers[id] = { elapsedTime: 0, isRunning: false };
-        }
-        if (timers[id].isRunning) {
-            stopTimer(id);
-            button.textContent = 'Start';
-        } else {
-            startTimer(id);
-            button.textContent = 'Stop';
-        }
-    }
 
-    function startTimer(id) {
-        if (timers[id].isRunning) {
-            console.log('Timer is already running');
-            return;
+    document.addEventListener('DOMContentLoaded', function () {
+        // Delegate event listener to the parent table
+        document.querySelector('.task-table').addEventListener('click', function (event) {
+            // Check if the clicked element is a start/stop button
+            if (event.target && event.target.id === 'startStopButton') {
+                toggleTimer(event);
+            }
+        });
+
+        function toggleTimer(event) {
+            console.log('toggleTimer function called');
+            const button = event.target;
+            const id = button.getAttribute('data-id');
+            if (!timers[id]) {
+                timers[id] = {elapsedTime: 0, isRunning: false};
+            }
+            if (timers[id].isRunning) {
+                stopTimer(id);
+                button.textContent = 'Start';
+            } else {
+                startTimer(id);
+                button.textContent = 'Stop';
+            }
         }
-        timers[id].startTime = Date.now();
-        timers[id].isRunning = true;
-    }
 
-    function stopTimer(id) {
-        if (!timers[id].isRunning) {
-            console.log('Timer is not running');
-            return;
+        function startTimer(id) {
+            if (timers[id].isRunning) {
+                console.log('Timer is already running');
+                return;
+            }
+            timers[id].startTime = Date.now();
+            timers[id].isRunning = true;
         }
-        timers[id].elapsedTime += Date.now() - timers[id].startTime;
-        timers[id].isRunning = false;
 
-        // Update the display of hours worked
-        const button = document.querySelector(`button[data-id="${id}"]`);
-        const row = button.closest('tr');
-        const hoursWorkedCell = row.querySelector(`.hoursWorked-${id}`);
-        hoursWorkedCell.textContent = (timers[id].elapsedTime / 3600000).toFixed(2); // Convert milliseconds to hours
-    }
+        function stopTimer(id) {
+            if (!timers[id].isRunning) {
+                console.log('Timer is not running');
+                return;
+            }
+            timers[id].elapsedTime += Date.now() - timers[id].startTime;
+            timers[id].isRunning = false;
 
-    let timers = {};
-});
+            // Update the display of hours worked
+            const button = document.querySelector(`button[data-id="${id}"]`);
+            const row = button.closest('tr');
+            const hoursWorkedCell = row.querySelector(`.hoursWorked-${id}`);
+            hoursWorkedCell.textContent = (timers[id].elapsedTime / 3600000).toFixed(2); // Convert milliseconds to hours
+        }
+
+        let timers = {};
+    });
 
 // Add event listeners to the sort buttons
-document.querySelector('.task-table').addEventListener('click', function(event) {
-    if (event.target && event.target.classList.contains('sort')) {
-        const order = event.target.dataset.sort;
-        const column = event.target.dataset.column;
-        sortTasks(order, column);
-    }
-});
-
-function sortTasks(order) {
-// Attach the event listener to the table
-document.querySelector('.task-table').addEventListener('change', function(event) {
-    // Check if the event target has the class 'priorityDropdown'
-    if (event.target.classList.contains('priorityDropdown')) {
-        // Get the task ID
-        const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
-
-        // Save the selected value to the local storage with the task ID
-        localStorage.setItem(`priority-${taskId}`, event.target.value);
-    }
-});
-document.querySelector('.task-table').addEventListener('change', function(event) {
-    // Check if the event target has the class 'priorityDropdown'
-    if (event.target.classList.contains('statusDropdown')) {
-        // Get the task ID
-        const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
-
-        // Save the selected value to the local storage with the task ID
-        localStorage.setItem(`status-${taskId}`, event.target.value);
-    }
+    document.querySelector('.task-table').addEventListener('click', function (event) {
+        if (event.target && event.target.classList.contains('sort')) {
+            const order = event.target.dataset.sort;
+            const column = event.target.dataset.column;
+            sortTasks(order, column);
+        }
     });
-fetch('/data')
-        .then(response => response.json())
-        .then(data => {
-            // Sort the data based on the order and 'date'
-            data.sort((a, b) => {
-                const dateA = new Date(a.date);
-                const dateB = new Date(b.date);
 
-                if (order === 'asc') {
-                    return dateA - dateB;
-                } else {
-                    return dateB - dateA;
+    function sortTasks(order) {
+// Attach the event listener to the table
+        document.querySelector('.task-table').addEventListener('change', function (event) {
+            // Check if the event target has the class 'priorityDropdown'
+            if (event.target.classList.contains('priorityDropdown')) {
+                // Get the task ID
+                const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
+
+                // Save the selected value to the local storage with the task ID
+                localStorage.setItem(`priority-${taskId}`, event.target.value);
+            }
+        });
+        document.querySelector('.task-table').addEventListener('change', function (event) {
+            // Check if the event target has the class 'priorityDropdown'
+            if (event.target.classList.contains('statusDropdown')) {
+                // Get the task ID
+                const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
+
+                // Save the selected value to the local storage with the task ID
+                localStorage.setItem(`status-${taskId}`, event.target.value);
+            }
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelector('.task-table').addEventListener('change', function (event) {
+                if (event.target.classList.contains('userDropdown')) {
+                    const taskId = event.target.closest('tr').querySelector('td[data-id]').getAttribute('data-id');
+                    localStorage.setItem(`created-${taskId}`, event.target.value);
                 }
             });
+        });
+        fetch('/data')
+            .then(response => response.json())
+            .then(data => {
+                // Sort the data based on the order and 'date'
+                data.sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
 
-            // Clear the task list
-            const tableBody = document.querySelector('.task-table tbody');
-            tableBody.innerHTML = '';
+                    if (order === 'asc') {
+                        return dateA - dateB;
+                    } else {
+                        return dateB - dateA;
+                    }
+                });
 
-            // Repopulate the task list with the sorted data
-            data.forEach(item => {
-                const row = document.createElement('tr');
+                // Clear the task list
+                const tableBody = document.querySelector('.task-table tbody');
+                tableBody.innerHTML = '';
 
-                // Add cells to the row
-                // Adjust this part to match your actual table structure
-                row.innerHTML = `
+                // Repopulate the task list with the sorted data
+                data.forEach(item => {
+                    const row = document.createElement('tr');
+
+                    // Add cells to the row
+                    // Adjust this part to match your actual table structure
+                    row.innerHTML = `
                     <td><input type="date" value="${new Date().toISOString().substr(0, 10)}"></td>
                       <td><select class="projectDropdown"><option>${item.project}</option></td>
                 <td><select class="taskDropdown"> <option>${item.task}</option></td>
@@ -435,8 +546,8 @@ fetch('/data')
                         <option>Low</option>
                     </select>
                 </td>
-                   <td><select id="createdByDropdown"></option></td>
-<td><select id="assignedToDropdown"><option></option></td>
+                 <td><select class="userDropdown"><option>${item.user}</option></td>
+<td><select class="assignedToDropdown"><option>${item.user}</option></td>
 
                    <td>
                      <select class="statusDropdown">
@@ -451,7 +562,7 @@ fetch('/data')
 <td class="hoursWorked-${item.id}"></td>
 
                       <td>
-                        <button class="save">Save Changes </button>
+                        <button class="save">Save </button>
                         <button class="deleteButton">Delete</button> <!-- Add this line -->
                     </td>
 
@@ -459,99 +570,148 @@ fetch('/data')
 <td>
                 `;
 
-                // Append the row to the table body
-                tableBody.appendChild(row);
-                // Set the selected value of the dropdown from the local storage
-                // Set the selected value of the dropdown from the local storage
-                const savedPriority = localStorage.getItem(`priority-${item.id}`);
-                if (savedPriority) {
-                    row.querySelector('.priorityDropdown').value = savedPriority;
-                }
-                const savedStatus = localStorage.getItem(`status-${item.id}`);
-                if (savedStatus) {
-                    row.querySelector('.statusDropdown').value = savedStatus;
-                }
-                // Repopulate the dropdowns
-                populateProjectDropdowns();
-                populateCreatedByDropdowns();
-                populateAssignedToDropdowns();
-            })
+                    // Append the row to the table body
+                    tableBody.appendChild(row);
+                    // Set the selected value of the dropdown from the local storage
+                    // Set the selected value of the dropdown from the local storage
+                    const savedPriority = localStorage.getItem(`priority-${item.id}`);
+                    if (savedPriority) {
+                        row.querySelector('.priorityDropdown').value = savedPriority;
+                    }
+                    const savedStatus = localStorage.getItem(`status-${item.id}`);
+                    if (savedStatus) {
+                        row.querySelector('.statusDropdown').value = savedStatus;
+                    }
+                    const savedCreated = localStorage.getItem(`created-${item.id}`);
+                    if (savedCreated) {
+                        row.querySelector('.userDropdown').value = savedCreated;
+                    }
+                    // Repopulate the dropdowns
+                    populateProjectDropdowns();
+                    populateCreatedByDropdowns();
+                    populateAssignedToDropdowns();
+                    populateUsersDropdowns();
+                })
 
 
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-
-        });
-
-            function populateProjectDropdowns() {
-                // Fetch the projects and populate the project dropdowns
-                fetch('/clockify/projects/names')
-                    .then(response => response.json())
-                    .then(projectNames => {
-                        const projectDropdowns = document.querySelectorAll('.projectDropdown');
-                        projectNames.forEach(projectName => {
-                            const option = document.createElement('option');
-                            option.value = projectName;
-                            option.textContent = projectName;
-                            projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
-                        });
-                    })
-                    .catch(error => console.error('Error loading projects:', error));
-                document.querySelectorAll('.projectDropdown').forEach(dropdown => {
-                    dropdown.addEventListener('change', function () {
-                        const projectName = this.value;
-                        // Find the '.taskDropdown' within the same table row
-                        const taskDropdown = this.closest('tr').querySelector('.taskDropdown');
-                        fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
-                            .then(response => response.json())
-                            .then(taskNames => {
-                                taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
-                                taskNames.forEach(taskName => {
-                                    const option = document.createElement('option');
-                                    option.value = taskName;
-                                    option.textContent = taskName;
-                                    taskDropdown.appendChild(option);
-                                });
-                            });
+                    .catch(error => {
+                        console.error('Error:', error);
                     });
+
+            });
+
+
+        function populateProjectDropdowns() {
+            // Fetch the projects and populate the project dropdowns
+            fetch('/clockify/projects/names')
+                .then(response => response.json())
+                .then(projectNames => {
+                    const projectDropdowns = document.querySelectorAll('.projectDropdown');
+                    projectNames.forEach(projectName => {
+                        const option = document.createElement('option');
+                        option.value = projectName;
+                        option.textContent = projectName;
+                        projectDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading projects:', error));
+            document.querySelectorAll('.projectDropdown').forEach(dropdown => {
+                dropdown.addEventListener('change', function () {
+                    const projectName = this.value;
+                    // Find the '.taskDropdown' within the same table row
+                    const taskDropdown = this.closest('tr').querySelector('.taskDropdown');
+                    fetch(`/clockify/projects/${encodeURIComponent(projectName)}/tasks`)
+                        .then(response => response.json())
+                        .then(taskNames => {
+                            taskDropdown.innerHTML = '<option value="">Select Task</option>'; // Reset tasks
+                            taskNames.forEach(taskName => {
+                                const option = document.createElement('option');
+                                option.value = taskName;
+                                option.textContent = taskName;
+                                taskDropdown.appendChild(option);
+                            });
+                        });
                 });
-            }
+            });
+        }
 
 
-            function populateCreatedByDropdowns() {
-                // Fetch the users and populate the createdBy dropdowns
-                fetch('/clockify/users')
-                    .then(response => response.json())
-                    .then(userNames => {
-                        const createdByDropdowns = document.querySelectorAll('#createdByDropdown');
-                        userNames.forEach(userName => {
-                            const option = document.createElement('option');
-                            option.value = userName;
-                            option.textContent = userName;
-                            createdByDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
-                        });
-                    })
-                    .catch(error => console.error('Error loading users:', error));
-            }
+        function populateCreatedByDropdowns() {
+            // Fetch the users and populate the createdBy dropdowns
+            fetch('/clockify/users')
+                .then(response => response.json())
+                .then(userNames => {
+                    const createdByDropdowns = document.querySelectorAll('.createdByDropdown');
+                    userNames.forEach(userName => {
+                        const option = document.createElement('option');
+                        option.value = userName;
+                        option.textContent = userName;
+                        createdByDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading users:', error));
+        }
 
-            function populateAssignedToDropdowns() {
-                // Fetch the users and populate the assignedTo dropdowns
-                fetch('/clockify/users')
-                    .then(response => response.json())
-                    .then(userNames => {
-                        const assignedToDropdowns = document.querySelectorAll('#assignedToDropdown');
-                        userNames.forEach(userName => {
-                            const option = document.createElement('option');
-                            option.value = userName;
-                            option.textContent = userName;
-                            assignedToDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
-                        });
-                    })
-                    .catch(error => console.error('Error loading users:', error));
-            }
+        function populateAssignedToDropdowns() {
+            // Fetch the users and populate the assignedTo dropdowns
+            fetch('/clockify/users')
+                .then(response => response.json())
+                .then(userNames => {
+                    const assignedToDropdowns = document.querySelectorAll('.assignedToDropdown');
+                    userNames.forEach(userName => {
+                        const option = document.createElement('option');
+                        option.value = userName;
+                        option.textContent = userName;
+                        assignedToDropdowns.forEach(dropdown => dropdown.appendChild(option.cloneNode(true)));
+                    });
+                })
+                .catch(error => console.error('Error loading users:', error));
+        }
 
-}
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const createdByDropdown = document.getElementById('userDropdown');
+        const showCompletedTasksCheckbox = document.getElementById('showCompletedTasks');
+        const showTasksIAssignedCheckbox = document.getElementById('showTasksIAssigned');
+        const currentUser = createdByDropdown.value;; // This should be dynamically set to the current user's username.
+
+        function filterTasks() {
+
+            const showCompleted = showCompletedTasksCheckbox.checked;
+            const showAssignedByMe = showTasksIAssignedCheckbox.checked;
+
+            document.querySelectorAll('.task-table tbody tr').forEach(row => {
+                const status = row.querySelector('.statusDropdown').value;
+                const createdBy = row.querySelector('.userDropdown').value;
+
+                let shouldShow = true;
+
+                // Filter logic for showing completed tasks
+                if (showCompleted && status !== 'Completed') {
+                    shouldShow = false;
+                }
+
+                // Filter logic for showing tasks assigned by me
+                if (showAssignedByMe && createdBy !== currentUser) {
+                    shouldShow = false;
+                }
+
+                // Show or hide the row based on the filter
+                row.style.display = shouldShow ? '' : 'none';
+            });
+        }
+
+        // Add event listeners to checkboxes
+        showCompletedTasksCheckbox.addEventListener('change', filterTasks);
+        showTasksIAssignedCheckbox.addEventListener('change', filterTasks);
+
+        // Initial filter setup (useful when data loads and checkboxes are supposed to be active)
+        filterTasks();
+
+        // You might need to call filterTasks() again after data is loaded or updated
+        // For example, after fetch('/data') or similar AJAX calls that update the table
+    });
 
 
 
